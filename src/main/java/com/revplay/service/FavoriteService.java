@@ -1,0 +1,54 @@
+package com.revplay.service;
+
+import com.revplay.entity.Favorite;
+import com.revplay.entity.Song;
+import com.revplay.entity.User;
+import com.revplay.repository.FavoriteRepository;
+import com.revplay.repository.SongRepository;
+import com.revplay.repository.UserRepository;
+import com.revplay.security.SecurityUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class FavoriteService {
+
+    private final FavoriteRepository favoriteRepository;
+    private final UserRepository userRepository;
+    private final SongRepository songRepository;
+
+    private User currentUser() {
+        String username = SecurityUtil.currentUsername();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    public void addFavorite(Long songId) {
+        User user = currentUser();
+        Song song = songRepository.findById(songId)
+                .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+
+        if (favoriteRepository.existsByUserAndSong(user, song)) return;
+
+        favoriteRepository.save(Favorite.builder()
+                .user(user)
+                .song(song)
+                .build());
+    }
+
+    public void removeFavorite(Long songId) {
+        User user = currentUser();
+        Song song = songRepository.findById(songId)
+                .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+
+        favoriteRepository.deleteByUserAndSong(user, song);
+    }
+
+    public List<Favorite> myFavorites() {
+        User user = currentUser();
+        return favoriteRepository.findByUserOrderByCreatedAtDesc(user);
+    }
+}
