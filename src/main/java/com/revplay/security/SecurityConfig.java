@@ -37,6 +37,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/songs/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/playlists/public").permitAll()
+                        .requestMatchers("/artist/become").authenticated()
+                        .requestMatchers("/artist/**").hasRole("ARTIST")
+                        .requestMatchers("/artist/songs/**").hasRole("ARTIST")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
