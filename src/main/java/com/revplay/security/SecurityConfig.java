@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/artist/become").authenticated()
                         .requestMatchers("/artist/**").hasRole("ARTIST")
                         .requestMatchers("/artist/songs/**").hasRole("ARTIST")
+                        .requestMatchers("/artist/dashboard").hasRole("ARTIST")
 
                         .anyRequest().authenticated()
                 )
