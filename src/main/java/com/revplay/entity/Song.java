@@ -57,6 +57,11 @@ public class Song {
     @JoinColumn(name = "artist_profile_id")
     private ArtistProfile artist;
 
+    @ManyToOne
+    @JoinColumn(name = "album_id")
+    private Album album;
+
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();
