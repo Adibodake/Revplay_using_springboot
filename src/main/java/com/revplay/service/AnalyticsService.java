@@ -20,8 +20,12 @@ public class AnalyticsService {
     private final PlaylistRepository playlistRepository;
     private final FavoriteRepository favoriteRepository;
     private final ListeningHistoryRepository historyRepository;
+
     private final ArtistProfileRepository artistProfileRepository;
     private final SongRepository songRepository;
+
+    // ✅ add this
+    private final ArtistFollowRepository artistFollowRepository;
 
     private User currentUser() {
         String username = SecurityUtil.currentUsername();
@@ -31,6 +35,7 @@ public class AnalyticsService {
 
     public UserStatsResponse myStats() {
         User user = currentUser();
+
         long playlists = playlistRepository.findByOwnerOrderByCreatedAtDesc(user).size();
         long favs = favoriteRepository.countByUser(user);
         long plays = historyRepository.countByUser(user);
@@ -44,6 +49,8 @@ public class AnalyticsService {
 
         ArtistProfile profile = artistProfileRepository.findByUser(user)
                 .orElseThrow(() -> new IllegalArgumentException("Artist profile not found"));
+
+        long followerCount = artistFollowRepository.countByArtist(profile); // ✅ add this
 
         long totalSongs = songRepository.countByArtist(profile);
         long totalPlays = historyRepository.countPlaysForArtistUser(user.getId());
@@ -59,6 +66,12 @@ public class AnalyticsService {
                         ))
                         .toList();
 
-        return new ArtistDashboardResponse(totalSongs, totalPlays, totalFavorites, topSongs);
+        return new ArtistDashboardResponse(
+                totalSongs,
+                totalPlays,
+                totalFavorites,
+                followerCount,
+                topSongs
+        );
     }
 }
