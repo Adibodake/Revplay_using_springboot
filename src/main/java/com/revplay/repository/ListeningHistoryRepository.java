@@ -21,19 +21,31 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
     // Clear history
     void deleteByUser(User user);
 
+    // Listener stats
     long countByUser(User user);
 
     @Query("select coalesce(sum(h.song.durationSec), 0) from ListeningHistory h where h.user = :user")
-    long sumListeningSeconds(User user);
+    long sumListeningSeconds(@Param("user") User user);
 
+    // Artist analytics
     @Query("select count(h) from ListeningHistory h where h.song.artist.user.id = :artistUserId")
-    long countPlaysForArtistUser(Long artistUserId);
+    long countPlaysForArtistUser(@Param("artistUserId") Long artistUserId);
 
-    @Query("select h.song.id, h.song.title, count(h) as plays " +
-            "from ListeningHistory h " +
-            "where h.song.artist.user.id = :artistUserId " +
-            "group by h.song.id, h.song.title " +
-            "order by plays desc")
+    @Query("""
+           select h.song.id, h.song.title, count(h) as plays
+           from ListeningHistory h
+           where h.song.artist.user.id = :artistUserId
+           group by h.song.id, h.song.title
+           order by plays desc
+           """)
     List<Object[]> topSongsForArtistUser(@Param("artistUserId") Long artistUserId, Pageable pageable);
 
+    @Query("""
+           select h.user.id, h.user.username, count(h) as plays
+           from ListeningHistory h
+           where h.song.artist.user.id = :artistUserId
+           group by h.user.id, h.user.username
+           order by plays desc
+           """)
+    List<Object[]> topListeners(@Param("artistUserId") Long artistUserId, Pageable pageable);
 }

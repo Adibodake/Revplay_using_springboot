@@ -1,6 +1,7 @@
 package com.revplay.service;
 
 import com.revplay.dto.ArtistDashboardResponse;
+import com.revplay.dto.TopListenerResponse;
 import com.revplay.dto.UserStatsResponse;
 import com.revplay.entity.ArtistProfile;
 import com.revplay.entity.User;
@@ -23,8 +24,6 @@ public class AnalyticsService {
 
     private final ArtistProfileRepository artistProfileRepository;
     private final SongRepository songRepository;
-
-    // ✅ add this
     private final ArtistFollowRepository artistFollowRepository;
 
     private User currentUser() {
@@ -33,6 +32,7 @@ public class AnalyticsService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
+    // ✅ Listener stats
     public UserStatsResponse myStats() {
         User user = currentUser();
 
@@ -44,13 +44,14 @@ public class AnalyticsService {
         return new UserStatsResponse(playlists, favs, plays, listeningSeconds);
     }
 
+    // ✅ Artist dashboard (+ follower count)
     public ArtistDashboardResponse artistDashboard(int topLimit) {
         User user = currentUser();
 
         ArtistProfile profile = artistProfileRepository.findByUser(user)
                 .orElseThrow(() -> new IllegalArgumentException("Artist profile not found"));
 
-        long followerCount = artistFollowRepository.countByArtist(profile); // ✅ add this
+        long followerCount = artistFollowRepository.countByArtist(profile);
 
         long totalSongs = songRepository.countByArtist(profile);
         long totalPlays = historyRepository.countPlaysForArtistUser(user.getId());
@@ -73,5 +74,19 @@ public class AnalyticsService {
                 followerCount,
                 topSongs
         );
+    }
+
+    // ✅ Top listeners for my songs (ARTIST)
+    public List<TopListenerResponse> topListeners(int limit) {
+        User user = currentUser();
+
+        return historyRepository.topListeners(user.getId(), PageRequest.of(0, limit))
+                .stream()
+                .map(r -> new TopListenerResponse(
+                        ((Number) r[0]).longValue(),
+                        (String) r[1],
+                        ((Number) r[2]).longValue()
+                ))
+                .toList();
     }
 }

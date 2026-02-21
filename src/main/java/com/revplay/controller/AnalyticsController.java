@@ -21,4 +21,12 @@ public class AnalyticsController {
     public ResponseEntity<?> artistDashboard(@RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(analyticsService.artistDashboard(limit));
     }
+
+    // ✅ NEW: Top listeners for artist songs
+    @GetMapping("/artist/top-listeners")
+    public ResponseEntity<?> topListeners(@RequestParam(defaultValue = "5") int limit) {
+        return ResponseEntity.ok(analyticsService.topListeners(limit));
+    }
+
+
 }
