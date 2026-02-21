@@ -98,6 +98,14 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
     List<Object[]> artistTrendsMonthly(@Param("artistUserId") Long artistUserId,
                                                  @Param("days") int days);
 
+    @Query("""
+       select h.song.id, h.song.title, count(h) as plays
+       from ListeningHistory h
+       group by h.song.id, h.song.title
+       order by plays desc
+       """)
+    List<Object[]> trendingSongs(Pageable pageable);
+
 
 
 
