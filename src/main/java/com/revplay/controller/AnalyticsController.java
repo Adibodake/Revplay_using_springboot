@@ -28,5 +28,10 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.topListeners(limit));
     }
 
+    @GetMapping("/artist/favoriters")
+    public ResponseEntity<?> favoriters(@RequestParam(required = false) Long songId) {
+        return ResponseEntity.ok(analyticsService.favoriters(songId));
+    }
+
 
 }

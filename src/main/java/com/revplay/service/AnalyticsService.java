@@ -10,6 +10,7 @@ import com.revplay.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import com.revplay.dto.FavoriterResponse;
 
 import java.util.List;
 
@@ -86,6 +87,21 @@ public class AnalyticsService {
                         ((Number) r[0]).longValue(),
                         (String) r[1],
                         ((Number) r[2]).longValue()
+                ))
+                .toList();
+    }
+
+    public List<FavoriterResponse> favoriters(Long songId) {
+        User artistUser = currentUser();
+
+        List<Object[]> rows = (songId == null)
+                ? favoriteRepository.favoritersForArtist(artistUser.getId())
+                : favoriteRepository.favoritersForArtistSong(artistUser.getId(), songId);
+
+        return rows.stream()
+                .map(r -> new FavoriterResponse(
+                        ((Number) r[0]).longValue(),
+                        (String) r[1]
                 ))
                 .toList();
     }
