@@ -27,6 +27,8 @@ public class PlaylistFollow {
     @JoinColumn(name = "playlist_id", nullable = false)
     private Playlist playlist;
 
+    @Column(name = "order_index", nullable = false)
+    private int orderIndex;
     private LocalDateTime followedAt;
 
     @PrePersist

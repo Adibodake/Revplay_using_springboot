@@ -12,9 +12,14 @@ public interface PlaylistSongRepository extends JpaRepository<PlaylistSong, Long
 
     List<PlaylistSong> findByPlaylistOrderByPositionAsc(Playlist playlist);
 
+    // ✅ helpful
+    List<PlaylistSong> findByPlaylistIdOrderByPositionAsc(Long playlistId);
+
     boolean existsByPlaylistAndSong(Playlist playlist, Song song);
 
     void deleteByPlaylistAndSong(Playlist playlist, Song song);
+
+    long countByPlaylist(Playlist playlist);
 
     @Query("select coalesce(max(ps.position), 0) from PlaylistSong ps where ps.playlist = :playlist")
     int findMaxPosition(Playlist playlist);
