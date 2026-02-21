@@ -20,6 +20,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 
 import java.util.List;
 
@@ -156,4 +160,53 @@ public class SongService {
 
         songRepository.delete(song);
     }
+
+    public List<Song> filterSongs(
+            String genre,
+            Long artistId,
+            Long albumId,
+            Integer releaseYear
+    ) {
+
+        if (genre != null) {
+            return songRepository.findByGenreIgnoreCase(genre);
+        }
+
+        if (artistId != null) {
+            return songRepository.findByArtistId(artistId);
+        }
+
+        if (albumId != null) {
+            return songRepository.findByAlbumId(albumId);
+        }
+
+        if (releaseYear != null) {
+            return songRepository.findByReleaseYear(releaseYear);
+        }
+
+        return songRepository.findAll();
+    }
+
+    public Object listSongs(
+            int pageNo, int pageSize, String sortBy, String sortDir,
+            String genre, Long artistId, Long albumId, Integer releaseYear
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        // ✅ If filter applied, return filtered list (simple version)
+        if (genre != null && !genre.isBlank()) return songRepository.findByGenreIgnoreCase(genre);
+        if (artistId != null) return songRepository.findByArtistId(artistId);
+        if (albumId != null) return songRepository.findByAlbumId(albumId);
+        if (releaseYear != null) return songRepository.findByReleaseYear(releaseYear);
+
+        // ✅ Otherwise return paginated
+        return songRepository.findAll(pageable);
+    }
+
+
+
 }

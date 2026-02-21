@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/artist/dashboard").hasRole("ARTIST")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/albums/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/songs/trending").permitAll()
+                        .requestMatchers("/artists/**").permitAll()
 
 
                         .anyRequest().authenticated()

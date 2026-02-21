@@ -10,4 +10,6 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
     List<Album> findByArtistOrderByCreatedAtDesc(ArtistProfile artist);
 
     List<Album> findByNameContainingIgnoreCase(String keyword);
+
+    List<Album> findByArtistId(Long artistId);
 }

@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "songs")
 @Getter
@@ -53,6 +54,7 @@ public class Song {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+
     @ManyToOne
     @JoinColumn(name = "artist_profile_id")
     private ArtistProfile artist;
@@ -60,6 +62,7 @@ public class Song {
     @ManyToOne
     @JoinColumn(name = "album_id")
     private Album album;
+
 
 
     @PrePersist
