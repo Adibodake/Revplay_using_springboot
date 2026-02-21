@@ -21,4 +21,6 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<Song> findByAlbumOrderByIdAsc(Album album);
 
     List<Song> findByArtistOrderByIdAsc(ArtistProfile artist);
+
+    List<Song> findByTitleContainingIgnoreCase(String keyword);
 }

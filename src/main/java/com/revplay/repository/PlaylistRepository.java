@@ -10,4 +10,5 @@ import java.util.List;
 public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
     List<Playlist> findByOwnerOrderByCreatedAtDesc(User owner);
     List<Playlist> findByPrivacyOrderByCreatedAtDesc(PlaylistPrivacy privacy);
+    List<Playlist> findByNameContainingIgnoreCase(String keyword);
 }

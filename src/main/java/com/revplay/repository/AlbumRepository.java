@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface AlbumRepository extends JpaRepository<Album, Long> {
     List<Album> findByArtistOrderByCreatedAtDesc(ArtistProfile artist);
+
+    List<Album> findByNameContainingIgnoreCase(String keyword);
 }
