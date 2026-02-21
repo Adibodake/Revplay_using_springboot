@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import com.revplay.dto.FavoriterResponse;
-
+import com.revplay.dto.TrendPointResponse;
+import com.revplay.entity.enums.TrendBucket;
 import java.util.List;
 
 @Service
@@ -102,6 +103,23 @@ public class AnalyticsService {
                 .map(r -> new FavoriterResponse(
                         ((Number) r[0]).longValue(),
                         (String) r[1]
+                ))
+                .toList();
+    }
+
+    public List<TrendPointResponse> trends(TrendBucket bucket, int days) {
+        User artistUser = currentUser();
+
+        List<Object[]> rows = switch (bucket) {
+            case DAILY -> historyRepository.artistTrendsDaily(artistUser.getId(), days);
+            case WEEKLY -> historyRepository.artistTrendsWeekly(artistUser.getId(), days);
+            case MONTHLY -> historyRepository.artistTrendsMonthly(artistUser.getId(), days);
+        };
+
+        return rows.stream()
+                .map(r -> new TrendPointResponse(
+                        String.valueOf(r[0]),
+                        ((Number) r[1]).longValue()
                 ))
                 .toList();
     }

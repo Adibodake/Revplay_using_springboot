@@ -4,6 +4,7 @@ import com.revplay.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.revplay.entity.enums.TrendBucket;
 
 @RestController
 @RequestMapping("/analytics")
@@ -31,6 +32,14 @@ public class AnalyticsController {
     @GetMapping("/artist/favoriters")
     public ResponseEntity<?> favoriters(@RequestParam(required = false) Long songId) {
         return ResponseEntity.ok(analyticsService.favoriters(songId));
+    }
+
+    @GetMapping("/artist/trends")
+    public ResponseEntity<?> trends(
+            @RequestParam(defaultValue = "DAILY") TrendBucket bucket,
+            @RequestParam(defaultValue = "30") int days
+    ) {
+        return ResponseEntity.ok(analyticsService.trends(bucket, days));
     }
 
 

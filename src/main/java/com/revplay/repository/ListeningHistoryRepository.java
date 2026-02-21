@@ -7,6 +7,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -48,4 +53,54 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
            order by plays desc
            """)
     List<Object[]> topListeners(@Param("artistUserId") Long artistUserId, Pageable pageable);
+
+
+    // ✅ DAILY (MySQL): group by DATE(played_at)
+    @Query(value = """
+        select date(h.played_at) as bucketKey, count(*) as plays
+        from listening_history h
+        join songs s on s.id = h.song_id
+        join artist_profiles ap on ap.id = s.artist_profile_id
+        where ap.user_id = :artistUserId
+          and h.played_at >= (now() - interval :days day)
+        group by date(h.played_at)
+        order by bucketKey
+        """, nativeQuery = true)
+    java.util.List<Object[]> artistTrendsDaily(@Param("artistUserId") Long artistUserId,
+                                               @Param("days") int days);
+
+    // ✅ WEEKLY (MySQL): year-week (mode 3 ISO-like)
+    @Query(value = """
+        select concat(year(h.played_at), '-W', lpad(week(h.played_at, 3), 2, '0')) as bucketKey,
+               count(*) as plays
+        from listening_history h
+        join songs s on s.id = h.song_id
+        join artist_profiles ap on ap.id = s.artist_profile_id
+        where ap.user_id = :artistUserId
+          and h.played_at >= (now() - interval :days day)
+        group by year(h.played_at), week(h.played_at, 3)
+        order by year(h.played_at), week(h.played_at, 3)
+        """, nativeQuery = true)
+    List<Object[]> artistTrendsWeekly(@Param("artistUserId") Long artistUserId,
+                                                @Param("days") int days);
+
+    // ✅ MONTHLY (MySQL): YYYY-MM
+    @Query(value = """
+        select date_format(h.played_at, '%Y-%m') as bucketKey, count(*) as plays
+        from listening_history h
+        join songs s on s.id = h.song_id
+        join artist_profiles ap on ap.id = s.artist_profile_id
+        where ap.user_id = :artistUserId
+          and h.played_at >= (now() - interval :days day)
+        group by date_format(h.played_at, '%Y-%m')
+        order by bucketKey
+        """, nativeQuery = true)
+    List<Object[]> artistTrendsMonthly(@Param("artistUserId") Long artistUserId,
+                                                 @Param("days") int days);
+
+
+
+
+
+
 }
