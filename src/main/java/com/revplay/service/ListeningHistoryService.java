@@ -13,6 +13,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -40,9 +41,15 @@ public class ListeningHistoryService {
                 .song(song)
                 .build();
 
+        // ✅ if entity doesn't set playedAt, we ensure it
+        if (entry.getPlayedAt() == null) {
+            entry.setPlayedAt(LocalDateTime.now());
+        }
+
         historyRepository.save(entry);
     }
 
+    @Transactional(readOnly = true)
     public List<HistoryResponse> recent() {
         User user = currentUser();
         return historyRepository.findTop50ByUserOrderByPlayedAtDesc(user)
@@ -51,6 +58,17 @@ public class ListeningHistoryService {
                 .toList();
     }
 
+    // ✅ NEW: recent distinct songs (no duplicates)
+    @Transactional(readOnly = true)
+    public List<HistoryResponse> recentDistinct(int limit) {
+        User user = currentUser();
+        return historyRepository.recentDistinctSongs(user.getId(), limit)
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<HistoryResponse> all(int page, int size) {
         User user = currentUser();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "playedAt"));
@@ -71,8 +89,10 @@ public class ListeningHistoryService {
                 h.getSong().getTitle(),
                 h.getSong().getAudioUrl(),
                 h.getSong().getCoverUrl(),
-                h.getPlayedAt()
+                h.getPlayedAt(),
+                // ✅ new fields (optional but recommended)
+                h.getSong().getArtist() != null ? h.getSong().getArtist().getArtistName() : null,
+                h.getSong().getDurationSec()
         );
     }
-
 }

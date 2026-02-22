@@ -24,7 +24,8 @@ public class FavoriteController {
         return ResponseEntity.ok("Removed from favorites");
     }
 
-    @GetMapping
+    // ✅ changed from @GetMapping to /me (best practice)
+    @GetMapping("/me")
     public ResponseEntity<?> myFavorites() {
         return ResponseEntity.ok(favoriteService.myFavorites());
     }

@@ -2,13 +2,13 @@ package com.revplay.dto;
 
 import java.time.LocalDateTime;
 
-public record HistoryResponse(
+public record HistoryItemResponse(
         Long id,
         Long songId,
         String title,
-        String audioUrl,
+        String artistName,
+        int durationSec,
         String coverUrl,
         LocalDateTime playedAt,
-        String artistName,
-        int durationSec
+        int listenedSeconds
 ) {}

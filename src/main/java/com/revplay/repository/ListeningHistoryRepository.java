@@ -7,11 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -20,7 +15,7 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
     // Full history (latest first)
     Page<ListeningHistory> findByUserOrderByPlayedAtDesc(User user, Pageable pageable);
 
-    // Recent 50
+    // Recent 50 (can contain duplicates)
     List<ListeningHistory> findTop50ByUserOrderByPlayedAtDesc(User user);
 
     // Clear history
@@ -54,6 +49,24 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
            """)
     List<Object[]> topListeners(@Param("artistUserId") Long artistUserId, Pageable pageable);
 
+    // ✅ NEW: Recent distinct songs (latest play per song)
+    // NOTE: Ensure your DB table/columns match:
+    // listening_history, user_id, song_id, played_at
+    @Query(value = """
+        SELECT h.*
+        FROM listening_history h
+        JOIN (
+            SELECT song_id, MAX(played_at) AS max_played
+            FROM listening_history
+            WHERE user_id = :userId
+            GROUP BY song_id
+            ORDER BY max_played DESC
+            LIMIT :limit
+        ) t ON t.song_id = h.song_id AND t.max_played = h.played_at
+        WHERE h.user_id = :userId
+        ORDER BY h.played_at DESC
+        """, nativeQuery = true)
+    List<ListeningHistory> recentDistinctSongs(@Param("userId") Long userId, @Param("limit") int limit);
 
     // ✅ DAILY (MySQL): group by DATE(played_at)
     @Query(value = """
@@ -66,8 +79,8 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
         group by date(h.played_at)
         order by bucketKey
         """, nativeQuery = true)
-    java.util.List<Object[]> artistTrendsDaily(@Param("artistUserId") Long artistUserId,
-                                               @Param("days") int days);
+    List<Object[]> artistTrendsDaily(@Param("artistUserId") Long artistUserId,
+                                     @Param("days") int days);
 
     // ✅ WEEKLY (MySQL): year-week (mode 3 ISO-like)
     @Query(value = """
@@ -82,7 +95,7 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
         order by year(h.played_at), week(h.played_at, 3)
         """, nativeQuery = true)
     List<Object[]> artistTrendsWeekly(@Param("artistUserId") Long artistUserId,
-                                                @Param("days") int days);
+                                      @Param("days") int days);
 
     // ✅ MONTHLY (MySQL): YYYY-MM
     @Query(value = """
@@ -96,7 +109,7 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
         order by bucketKey
         """, nativeQuery = true)
     List<Object[]> artistTrendsMonthly(@Param("artistUserId") Long artistUserId,
-                                                 @Param("days") int days);
+                                       @Param("days") int days);
 
     @Query("""
        select h.song.id, h.song.title, count(h) as plays
@@ -105,10 +118,4 @@ public interface ListeningHistoryRepository extends JpaRepository<ListeningHisto
        order by plays desc
        """)
     List<Object[]> trendingSongs(Pageable pageable);
-
-
-
-
-
-
 }

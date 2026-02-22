@@ -25,6 +25,10 @@ public class ListeningHistoryController {
         return ResponseEntity.ok(historyService.recent());
     }
 
+    @GetMapping("/recent/distinct")
+    public ResponseEntity<?> recentDistinct(@RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(historyService.recentDistinct(limit));
+    }
     // Full history (pagination)
     @GetMapping
     public ResponseEntity<?> all(

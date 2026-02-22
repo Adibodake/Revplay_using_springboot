@@ -9,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,12 @@ public class PlaylistService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
+    // ✅ helper to fetch playlist songs in order
+    private List<PlaylistSong> playlistSongs(Playlist p) {
+        return playlistSongRepository.findByPlaylistOrderByPositionAsc(p);
+    }
+
+    @Transactional
     public PlaylistResponse create(PlaylistCreateRequest req) {
         User owner = currentUser();
 
@@ -43,12 +52,16 @@ public class PlaylistService {
     public List<PlaylistResponse> myPlaylists() {
         User owner = currentUser();
         return playlistRepository.findByOwnerOrderByCreatedAtDesc(owner)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public List<PlaylistResponse> publicPlaylists() {
         return playlistRepository.findByPrivacyOrderByCreatedAtDesc(PlaylistPrivacy.PUBLIC)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public PlaylistResponse getById(Long playlistId) {
@@ -66,6 +79,7 @@ public class PlaylistService {
         return toResponse(p);
     }
 
+    @Transactional
     public PlaylistResponse update(Long playlistId, PlaylistUpdateRequest req) {
         User me = currentUser();
         Playlist p = playlistRepository.findById(playlistId)
@@ -93,7 +107,7 @@ public class PlaylistService {
         }
 
         // delete join rows first
-        List<PlaylistSong> items = playlistSongRepository.findByPlaylistOrderByPositionAsc(p);
+        List<PlaylistSong> items = playlistSongs(p);
         playlistSongRepository.deleteAll(items);
 
         playlistRepository.delete(p);
@@ -143,7 +157,7 @@ public class PlaylistService {
         playlistSongRepository.deleteByPlaylistAndSong(p, song);
 
         // reindex positions
-        List<PlaylistSong> items = playlistSongRepository.findByPlaylistOrderByPositionAsc(p);
+        List<PlaylistSong> items = playlistSongs(p);
         for (int i = 0; i < items.size(); i++) {
             items.get(i).setPosition(i + 1);
         }
@@ -162,21 +176,40 @@ public class PlaylistService {
             throw new IllegalArgumentException("Only owner can reorder songs");
         }
 
-        List<PlaylistSong> items = playlistSongRepository.findByPlaylistOrderByPositionAsc(p);
+        List<PlaylistSong> items = playlistSongs(p);
+
+        if (req.getSongIds() == null || req.getSongIds().isEmpty()) {
+            throw new IllegalArgumentException("songIds are required");
+        }
 
         // Validate same songs count
         if (req.getSongIds().size() != items.size()) {
             throw new IllegalArgumentException("Song list size mismatch");
         }
 
-        // Map by songId
-        java.util.Map<Long, PlaylistSong> map = new java.util.HashMap<>();
-        for (PlaylistSong it : items) map.put(it.getSong().getId(), it);
+        // ✅ Validate no duplicates in request
+        HashSet<Long> unique = new HashSet<>(req.getSongIds());
+        if (unique.size() != req.getSongIds().size()) {
+            throw new IllegalArgumentException("Duplicate songIds are not allowed");
+        }
 
+        // Map by songId
+        Map<Long, PlaylistSong> map = new HashMap<>();
+        for (PlaylistSong it : items) {
+            map.put(it.getSong().getId(), it);
+        }
+
+        // ✅ Validate request contains only songs from this playlist
+        for (Long songId : req.getSongIds()) {
+            if (!map.containsKey(songId)) {
+                throw new IllegalArgumentException("Song not in playlist: " + songId);
+            }
+        }
+
+        // Apply positions
         for (int i = 0; i < req.getSongIds().size(); i++) {
             Long songId = req.getSongIds().get(i);
             PlaylistSong it = map.get(songId);
-            if (it == null) throw new IllegalArgumentException("Song not in playlist: " + songId);
             it.setPosition(i + 1);
         }
 
@@ -186,7 +219,7 @@ public class PlaylistService {
 
     // ---------- mapper ----------
     private PlaylistResponse toResponse(Playlist p) {
-        List<PlaylistSongResponse> songs = playlistSongRepository.findByPlaylistOrderByPositionAsc(p)
+        List<PlaylistSongResponse> songs = playlistSongs(p)
                 .stream()
                 .map(ps -> new PlaylistSongResponse(
                         ps.getSong().getId(),
