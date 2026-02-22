@@ -42,5 +42,18 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.trends(bucket, days));
     }
 
-
+    // ==========================================================
+    // ✅ NEW: FULL DASHBOARD (one API = stats + songs + listeners + trends)
+    // URL: /analytics/artist/full-dashboard?topSongsLimit=10&topListenersLimit=5&days=30
+    // ==========================================================
+    @GetMapping("/artist/full-dashboard")
+    public ResponseEntity<?> fullDashboard(
+            @RequestParam(defaultValue = "10") int topSongsLimit,
+            @RequestParam(defaultValue = "5") int topListenersLimit,
+            @RequestParam(defaultValue = "30") int days
+    ) {
+        return ResponseEntity.ok(
+                analyticsService.fullDashboard(topSongsLimit, topListenersLimit, days)
+        );
+    }
 }

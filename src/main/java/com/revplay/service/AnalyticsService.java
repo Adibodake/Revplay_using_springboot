@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 import com.revplay.dto.FavoriterResponse;
 import com.revplay.dto.TrendPointResponse;
 import com.revplay.entity.enums.TrendBucket;
+
 import java.util.List;
+
+// ✅ NEW DTO (only if you want "ONE API" full response)
+import com.revplay.dto.ArtistDashboardFullResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -92,6 +96,7 @@ public class AnalyticsService {
                 .toList();
     }
 
+    // ✅ Who favorited my songs
     public List<FavoriterResponse> favoriters(Long songId) {
         User artistUser = currentUser();
 
@@ -107,6 +112,7 @@ public class AnalyticsService {
                 .toList();
     }
 
+    // ✅ Trends (daily/weekly/monthly)
     public List<TrendPointResponse> trends(TrendBucket bucket, int days) {
         User artistUser = currentUser();
 
@@ -122,5 +128,33 @@ public class AnalyticsService {
                         ((Number) r[1]).longValue()
                 ))
                 .toList();
+    }
+
+    // ==========================================================
+    // ✅ NEW METHOD (ADDED) - FULL DASHBOARD in ONE response
+    // DOES NOT change any old logic, just combines existing outputs
+    // ==========================================================
+    public ArtistDashboardFullResponse fullDashboard(int topSongsLimit, int topListenersLimit, int days) {
+
+        // Reuse existing logic safely:
+        ArtistDashboardResponse dashboard = artistDashboard(topSongsLimit);
+        List<TopListenerResponse> listeners = topListeners(topListenersLimit);
+
+        // Reuse trends method
+        List<TrendPointResponse> daily = trends(TrendBucket.DAILY, days);
+        List<TrendPointResponse> weekly = trends(TrendBucket.WEEKLY, days);
+        List<TrendPointResponse> monthly = trends(TrendBucket.MONTHLY, days);
+
+        return new ArtistDashboardFullResponse(
+                dashboard.totalSongs(),
+                dashboard.totalPlays(),
+                dashboard.totalFavorites(),
+                dashboard.followerCount(),
+                dashboard.topSongs(),
+                listeners,
+                daily,
+                weekly,
+                monthly
+        );
     }
 }
