@@ -35,4 +35,6 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     @Query("select s from Song s where year(s.releaseDate) = :year")
     List<Song> findByReleaseYear(@Param("year") int year);
 
+
+
 }

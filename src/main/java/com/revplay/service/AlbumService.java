@@ -30,6 +30,7 @@ public class AlbumService {
     }
 
     // ARTIST: create
+    @Transactional
     public AlbumResponse create(AlbumRequest req) {
         ArtistProfile artist = currentArtist();
 
@@ -41,10 +42,12 @@ public class AlbumService {
                 .coverUrl(req.getCoverUrl())
                 .build();
 
-        return toResponse(albumRepository.save(album));
+        Album saved = albumRepository.save(album);
+        return toResponse(saved);
     }
 
     // ARTIST: list mine
+    @Transactional(readOnly = true)
     public List<AlbumResponse> myAlbums() {
         ArtistProfile artist = currentArtist();
         return albumRepository.findByArtistOrderByCreatedAtDesc(artist)
@@ -52,12 +55,14 @@ public class AlbumService {
     }
 
     // PUBLIC: list all (simple)
+    @Transactional(readOnly = true)
     public List<AlbumResponse> allAlbums() {
         return albumRepository.findAll()
                 .stream().map(this::toResponse).toList();
     }
 
     // PUBLIC: details
+    @Transactional(readOnly = true)
     public AlbumResponse get(Long id) {
         Album album = albumRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Album not found"));
@@ -65,6 +70,7 @@ public class AlbumService {
     }
 
     // ARTIST: update
+    @Transactional
     public AlbumResponse update(Long id, AlbumRequest req) {
         ArtistProfile artist = currentArtist();
         Album album = albumRepository.findById(id)
@@ -79,7 +85,8 @@ public class AlbumService {
         album.setReleaseDate(req.getReleaseDate());
         album.setCoverUrl(req.getCoverUrl());
 
-        return toResponse(albumRepository.save(album));
+        Album saved = albumRepository.save(album);
+        return toResponse(saved);
     }
 
     // ARTIST: delete only if no songs
@@ -122,7 +129,11 @@ public class AlbumService {
         song.setAlbum(album);
         songRepository.save(song);
 
-        return toResponse(album);
+        // ✅ fetch fresh album so tracks reflect immediately
+        Album refreshed = albumRepository.findById(albumId)
+                .orElseThrow(() -> new IllegalArgumentException("Album not found"));
+
+        return toResponse(refreshed);
     }
 
     // ARTIST: remove song from album
@@ -146,7 +157,11 @@ public class AlbumService {
         song.setAlbum(null);
         songRepository.save(song);
 
-        return toResponse(album);
+        // ✅ fetch fresh album so tracks reflect immediately
+        Album refreshed = albumRepository.findById(albumId)
+                .orElseThrow(() -> new IllegalArgumentException("Album not found"));
+
+        return toResponse(refreshed);
     }
 
     // mapper
